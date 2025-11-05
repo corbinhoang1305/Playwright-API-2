@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["success", "data"],
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "enum": [true]
+    },
+    "data": {
+      "type": "object",
+      "required": ["token", "user", "expires_in"],
+      "properties": {
+        "token": {
+          "type": "string",
+          "minLength": 1
+        },
+        "user": {
+          "$ref": "#/definitions/User"
+        },
+        "expires_in": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "definitions": {
+    "User": {
+      "type": "object",
+      "required": ["id", "name", "email", "role", "is_active", "created_at", "updated_at"],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "facebook": {
+          "type": ["string", "null"]
+        },
+        "avatar": {
+          "type": ["string", "null"]
+        },
+        "hobbies": {
+          "type": ["string", "null"]
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "admin"]
+        },
+        "is_active": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
+

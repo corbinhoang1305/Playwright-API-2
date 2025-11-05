@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["id", "name", "email", "role", "is_active", "created_at", "updated_at"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "facebook": {
+      "type": ["string", "null"],
+      "pattern": "^(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?$"
+    },
+    "avatar": {
+      "type": ["string", "null"],
+      "pattern": "^https?://"
+    },
+    "hobbies": {
+      "type": ["string", "null"]
+    },
+    "role": {
+      "type": "string",
+      "enum": ["user", "admin"]
+    },
+    "is_active": {
+      "type": "integer",
+      "enum": [0, 1]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}
+

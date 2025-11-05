@@ -1,0 +1,10 @@
+{
+  "name": "Test User",
+  "email": "testuser@example.com",
+  "password": "password123",
+  "facebook": "https://facebook.com/testuser",
+  "avatar": "https://i.pravatar.cc/150?img=30",
+  "hobbies": "Reading, Coding, Testing",
+  "role": "user"
+}
+

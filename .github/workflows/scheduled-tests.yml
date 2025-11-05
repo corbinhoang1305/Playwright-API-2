@@ -1,0 +1,117 @@
+name: Daily Scheduled Tests
+
+on:
+  # Run at 9:00 AM GMT+7 (2:00 AM UTC) every day
+  schedule:
+    - cron: '0 2 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  scheduled-test:
+    name: Daily API Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      
+      - name: Create .env file
+        run: |
+          echo "BASE_URL=${{ secrets.BASE_URL || 'https://material.playwrightvn.com/api/user-management/v1' }}" > .env
+          echo "ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL || 'admin@example.com' }}" >> .env
+          echo "ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD || 'password' }}" >> .env
+          echo "USER_EMAIL=${{ secrets.USER_EMAIL || 'john@example.com' }}" >> .env
+          echo "USER_PASSWORD=${{ secrets.USER_PASSWORD || 'password' }}" >> .env
+          echo "NODE_ENV=production" >> .env
+      
+      - name: Run Playwright tests
+        run: npm run test:ci
+        env:
+          CI: true
+      
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-playwright-report-${{ github.run_number }}
+          path: playwright-report/
+          retention-days: 30
+      
+      - name: Upload Allure Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-allure-results-${{ github.run_number }}
+          path: allure-results/
+          retention-days: 30
+      
+      - name: Generate Test Summary
+        if: always()
+        run: |
+          echo "## 📊 Daily Test Report - $(date +'%Y-%m-%d %H:%M:%S GMT+7')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Execution Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: Scheduled Daily Test" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: 9:00 AM GMT+7" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node Version**: 20" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run Number**: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "playwright-report/index.html" ]; then
+            echo "✅ **Status**: Tests completed" >> $GITHUB_STEP_SUMMARY
+            echo "📋 **Report**: Available in artifacts" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status**: Tests failed or incomplete" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `❌ Daily Scheduled Tests Failed - ${new Date().toLocaleDateString()}`,
+              body: `## Daily Test Failure Report
+              
+              **Date**: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })} (GMT+7)
+              **Workflow**: Daily Scheduled Tests
+              **Run ID**: ${context.runId}
+              **Run Number**: ${context.runNumber}
+              
+              ### Details
+              The scheduled daily API tests have failed. Please review the test results and take necessary actions.
+              
+              ### Actions Required
+              - [ ] Review test failure logs
+              - [ ] Check API endpoint availability
+              - [ ] Verify test data and configurations
+              - [ ] Fix failing tests or update test scenarios
+              
+              ### Links
+              - [Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+              - [Download Reports](${context.payload.repository.html_url}/actions/runs/${context.runId}#artifacts)
+              
+              ---
+              *This issue was automatically created by GitHub Actions*`,
+              labels: ['test-failure', 'automated', 'daily-test']
+            });
+            
+            console.log(`Created issue #${issue.data.number}`);
+
