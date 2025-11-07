@@ -18,7 +18,7 @@ export const env = {
   
   // Regular user credentials
   user: {
-    email: process.env.USER_EMAIL || 'john.doe@example.com',
+    email: process.env.USER_EMAIL || 'john@example.com',
     password: process.env.USER_PASSWORD || 'password',
   },
   

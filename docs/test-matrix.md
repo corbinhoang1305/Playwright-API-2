@@ -5,16 +5,16 @@ This document outlines the test coverage for the User Management API, including 
 
 ## Endpoints
 
-| Endpoint | Method | Authentication | Admin | User | Anonymous |
-|----------|--------|----------------|-------|------|-----------|
-| `/login.php` | POST | No | ✅ | ✅ | ✅ |
-| `/users.php` | GET | Yes | ✅ | ✅ | ❌ |
-| `/users.php` | POST | Yes | ✅ | ❌ (403) | ❌ (401) |
-| `/users.php` | PUT | Yes | ✅ | ❌ (403) | ❌ (401) |
-| `/users.php` | DELETE | Yes | ✅ | ❌ (403) | ❌ (401) |
-| `/profile.php` | GET | Yes | ✅ | ✅ | ❌ |
-| `/profile.php` | PUT | Yes | ✅ | ✅ | ❌ |
-| `/reset.php` | POST | No | ✅ | ✅ | ✅ |
+|     Endpoint   | Method | Authentication | Admin | User      | Anonymous  |
+|----------------|--------|----------------|-------|-----------|------------|
+| `/login.php`   | POST   | No             | ✅    | ✅       | ✅        |
+| `/users.php`   | GET    | Yes            | ✅    | ✅       | ❌        |
+| `/users.php`   | POST   | Yes            | ✅    | ❌ (403) | ❌ (401)  |
+| `/users.php`   | PUT    | Yes            | ✅    | ❌ (403) | ❌ (401)  |
+| `/users.php`   | DELETE | Yes            | ✅    | ❌ (403) | ❌ (401)  |
+| `/profile.php` | GET    | Yes            | ✅    | ✅       | ❌        |
+| `/profile.php` | PUT    | Yes            | ✅    | ✅       | ❌        |
+| `/reset.php`   | POST   | No             | ✅    | ✅       | ✅        |
 
 ## Test Suites
 

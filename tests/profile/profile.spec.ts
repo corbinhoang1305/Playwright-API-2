@@ -27,7 +27,7 @@ test.describe('Profile Management', () => {
       
       const body = await getJsonBody(response);
       expect(body.profile).toBeDefined();
-      expect(body.profile.email).toBe('john.doe@example.com');
+      expect(body.profile.email).toBe('john@example.com');
       expect(body.profile.role).toBe('user');
     });
 
@@ -136,7 +136,7 @@ test.describe('Profile Management', () => {
       
       const body = await getJsonBody(response);
       expect(body.profile.email).not.toBe('newemail@example.com');
-      expect(body.profile.email).toBe('john.doe@example.com'); // Original email
+      expect(body.profile.email).toBe('john@example.com'); // Original email
     });
 
     test('should not allow updating role via profile endpoint', async ({ client, userToken }) => {
@@ -198,7 +198,7 @@ test.describe('Profile Management', () => {
       await expectSuccess(response);
       
       const body = await getJsonBody(response);
-      expect(body.profile.email).toBe('john.doe@example.com'); // Confirms it's the user's profile
+      expect(body.profile.email).toBe('john@example.com'); // Confirms it's the user's profile
     });
   });
 });
