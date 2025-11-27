@@ -87,14 +87,12 @@ jobs:
           path: test-results/
           retention-days: 30
   
-  # Generate and publish Allure report
+  # Generate Allure report (artifact only - no GitHub Pages)
   allure-report:
     name: Generate Allure Report
     runs-on: ubuntu-latest
     needs: test
     if: always()
-    permissions:
-      contents: write
     
     steps:
       - name: Checkout code
@@ -106,14 +104,6 @@ jobs:
           name: allure-results-node-20
           path: allure-results
       
-      - name: Get Allure history
-        uses: actions/checkout@v4
-        if: always()
-        continue-on-error: true
-        with:
-          ref: gh-pages
-          path: gh-pages
-      
       - name: Setup Allure Report
         uses: simple-elf/allure-report-action@master
         if: always()
@@ -122,13 +112,13 @@ jobs:
           allure_history: allure-history
           keep_reports: 20
       
-      - name: Deploy Allure Report to GitHub Pages
+      - name: Upload Allure Report as Artifact
+        uses: actions/upload-artifact@v4
         if: always()
-        uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: allure-history
+          name: allure-report-html
+          path: allure-history/
+          retention-days: 30
   
   # Notify on failure (optional)
   notify:
