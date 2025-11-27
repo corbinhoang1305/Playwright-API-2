@@ -124,35 +124,59 @@ jobs:
         if: always()
         run: |
           sleep 5
+          
+          # Escape special characters in commit message and author name
+          COMMIT_MSG=$(echo '${{ github.event.head_commit.message }}' | jq -Rs .)
+          COMMIT_AUTHOR=$(echo '${{ github.event.head_commit.author.name }}' | jq -Rs .)
+          
+          # Build JSON payload safely
+          PAYLOAD=$(jq -n \
+            --arg run_id "${{ github.run_id }}" \
+            --arg run_number "${{ github.run_number }}" \
+            --arg conclusion "${{ job.status }}" \
+            --arg html_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --arg workflow_name "${{ github.workflow }}" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg sha "${{ github.sha }}" \
+            --arg repo_full "${{ github.repository }}" \
+            --arg repo_name "${{ github.event.repository.name }}" \
+            --arg owner "${{ github.repository_owner }}" \
+            --arg repo_url "${{ github.event.repository.html_url }}" \
+            --arg actor "${{ github.actor }}" \
+            --argjson commit_msg "$COMMIT_MSG" \
+            --argjson commit_author "$COMMIT_AUTHOR" \
+            '{
+              workflow_run: {
+                id: ($run_id | tonumber),
+                run_number: ($run_number | tonumber),
+                status: "completed",
+                conclusion: $conclusion,
+                html_url: $html_url,
+                name: $workflow_name,
+                head_branch: $branch,
+                head_sha: $sha
+              },
+              repository: {
+                full_name: $repo_full,
+                name: $repo_name,
+                owner: {
+                  login: $owner
+                },
+                html_url: $repo_url
+              },
+              sender: {
+                login: $actor
+              },
+              commit: {
+                message: $commit_msg,
+                author: $commit_author
+              }
+            }')
+          
+          # Send notification
           curl -X POST "${{ secrets.N8N_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            -d '{
-              "workflow_run": {
-                "id": ${{ github.run_id }},
-                "run_number": ${{ github.run_number }},
-                "status": "completed",
-                "conclusion": "${{ job.status }}",
-                "html_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                "name": "${{ github.workflow }}",
-                "head_branch": "${{ github.ref_name }}",
-                "head_sha": "${{ github.sha }}"
-              },
-              "repository": {
-                "full_name": "${{ github.repository }}",
-                "name": "${{ github.event.repository.name }}",
-                "owner": {
-                  "login": "${{ github.repository_owner }}"
-                },
-                "html_url": "${{ github.event.repository.html_url }}"
-              },
-              "sender": {
-                "login": "${{ github.actor }}"
-              },
-              "commit": {
-                "message": "${{ github.event.head_commit.message }}",
-                "author": "${{ github.event.head_commit.author.name }}"
-              }
-            }'
+            -d "$PAYLOAD"
   
   # Notify on failure (optional)
   notify:
