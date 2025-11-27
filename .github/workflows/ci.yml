@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18, 20]
+        node-version: [20]
     
     steps:
       - name: Checkout code
@@ -98,10 +98,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Download Allure Results (Node 18)
+      - name: Download Allure Results (Node 20)
         uses: actions/download-artifact@v4
         with:
-          name: allure-results-node-18
+          name: allure-results-node-20
           path: allure-results
       
       - name: Get Allure history
