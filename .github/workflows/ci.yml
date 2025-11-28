@@ -120,20 +120,19 @@ jobs:
           path: allure-history/
           retention-days: 30
       
-      - name: Create Allure Report ZIP
+      - name: Create and Send Allure ZIP to n8n
         if: always()
         continue-on-error: true
         run: |
-          cd allure-history
-          zip -r ../allure-report.zip .
-          cd ..
-          ls -lh allure-report.zip
-      
-      - name: Send Allure Report to n8n
-        if: always()
-        continue-on-error: true
-        run: |
-          if [ -f "allure-report.zip" ]; then
+          if [ -d "allure-history" ]; then
+            # Create ZIP file
+            cd allure-history
+            zip -r ../allure-report.zip .
+            cd ..
+            
+            echo "📦 Created allure-report.zip ($(du -h allure-report.zip | cut -f1))"
+            
+            # Send ZIP file with metadata to n8n
             curl -X POST "${{ secrets.N8N_WEBHOOK_URL }}" \
               -F "file=@allure-report.zip" \
               -F "run_id=${{ github.run_id }}" \
@@ -147,9 +146,10 @@ jobs:
               -F "actor=${{ github.actor }}" \
               -F "commit_message=${{ github.event.head_commit.message }}" \
               -F "commit_author=${{ github.event.head_commit.author.name }}"
-            echo "✅ Allure report ZIP sent to n8n"
+            
+            echo "✅ Allure ZIP sent to n8n"
           else
-            echo "⚠️ allure-report.zip not found"
+            echo "⚠️ allure-history directory not found"
           fi
       
       - name: Notify n8n
