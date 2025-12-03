@@ -120,34 +120,66 @@ jobs:
           path: allure-history/
           retention-days: 30
       
-      - name: Create and Send Allure ZIP to n8n
+      - name: Send Allure JSON Files to n8n
         if: always()
         continue-on-error: true
         run: |
           if [ -d "allure-history" ]; then
-            # Create ZIP file
             cd allure-history
-            zip -r ../allure-report.zip .
-            cd ..
             
-            echo "📦 Created allure-report.zip ($(du -h allure-report.zip | cut -f1))"
+            # Find summary.json and history.json files
+            SUMMARY_FILE=$(find . -type f -name "summary.json" | head -1)
+            HISTORY_FILE=$(find . -type f -path "*/history.json" | head -1)
             
-            # Send ZIP file with metadata to n8n
-            curl -X POST "${{ secrets.N8N_WEBHOOK_URL }}" \
-              -F "file=@allure-report.zip" \
-              -F "run_id=${{ github.run_id }}" \
-              -F "run_number=${{ github.run_number }}" \
-              -F "conclusion=${{ needs.test.result }}" \
-              -F "html_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              -F "workflow_name=${{ github.workflow }}" \
-              -F "branch=${{ github.ref_name }}" \
-              -F "sha=${{ github.sha }}" \
-              -F "repo=${{ github.repository }}" \
-              -F "actor=${{ github.actor }}" \
-              -F "commit_message=${{ github.event.head_commit.message }}" \
-              -F "commit_author=${{ github.event.head_commit.author.name }}"
+            if [ -z "$SUMMARY_FILE" ] && [ -z "$HISTORY_FILE" ]; then
+              echo "⚠️ No summary.json or history.json found"
+              exit 0
+            fi
             
-            echo "✅ Allure ZIP sent to n8n"
+            # Build curl command with metadata first
+            CURL_CMD="curl -X POST \"${{ secrets.N8N_WEBHOOK_URL }}\""
+            CURL_CMD="$CURL_CMD -F \"run_id=${{ github.run_id }}\""
+            CURL_CMD="$CURL_CMD -F \"run_number=${{ github.run_number }}\""
+            CURL_CMD="$CURL_CMD -F \"conclusion=${{ needs.test.result }}\""
+            CURL_CMD="$CURL_CMD -F \"html_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\""
+            CURL_CMD="$CURL_CMD -F \"workflow_name=${{ github.workflow }}\""
+            CURL_CMD="$CURL_CMD -F \"branch=${{ github.ref_name }}\""
+            CURL_CMD="$CURL_CMD -F \"sha=${{ github.sha }}\""
+            CURL_CMD="$CURL_CMD -F \"repo=${{ github.repository }}\""
+            CURL_CMD="$CURL_CMD -F \"actor=${{ github.actor }}\""
+            CURL_CMD="$CURL_CMD -F \"commit_message=${{ github.event.head_commit.message }}\""
+            CURL_CMD="$CURL_CMD -F \"commit_author=${{ github.event.head_commit.author.name }}\""
+            
+            FILE_COUNT=0
+            
+            # Add summary.json if found
+            if [ -n "$SUMMARY_FILE" ]; then
+              rel_path="${SUMMARY_FILE#./}"
+              field_name="file_$FILE_COUNT"
+              CURL_CMD="$CURL_CMD -F \"$field_name=@$SUMMARY_FILE\""
+              CURL_CMD="$CURL_CMD -F \"${field_name}_path=$rel_path\""
+              CURL_CMD="$CURL_CMD -F \"${field_name}_name=summary.json\""
+              FILE_COUNT=$((FILE_COUNT + 1))
+              echo "📄 Found summary.json: $rel_path"
+            fi
+            
+            # Add history.json if found
+            if [ -n "$HISTORY_FILE" ]; then
+              rel_path="${HISTORY_FILE#./}"
+              field_name="file_$FILE_COUNT"
+              CURL_CMD="$CURL_CMD -F \"$field_name=@$HISTORY_FILE\""
+              CURL_CMD="$CURL_CMD -F \"${field_name}_path=$rel_path\""
+              CURL_CMD="$CURL_CMD -F \"${field_name}_name=history.json\""
+              FILE_COUNT=$((FILE_COUNT + 1))
+              echo "📄 Found history.json: $rel_path"
+            fi
+            
+            echo "📤 Sending $FILE_COUNT file(s) to n8n..."
+            
+            # Execute curl command
+            eval $CURL_CMD
+            
+            echo "✅ Allure JSON files sent to n8n"
           else
             echo "⚠️ allure-history directory not found"
           fi
